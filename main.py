@@ -1,83 +1,32 @@
-"""
-==========================================================
- SIMULADOR DE SOBREVIVÊNCIA
-==========================================================
-Projeto acadêmico desenvolvido em Python puro (sem
-dependências externas), utilizando:
-    - Listas aninhadas (inventário, sobreviventes)
-    - Matrizes (mapa de exploração)
-    - Funções bem definidas (uma para cada responsabilidade)
-    - Manipulação de strings (formatação de menus, nomes,
-      relatórios e parsing de entradas do usuário)
-
-Como executar:
-    python3 main.py
-==========================================================
-"""
-
 import random
 
-# ----------------------------------------------------------------------
-# CONSTANTES GLOBAIS
-# ----------------------------------------------------------------------
-
 RECURSOS_POSSIVEIS = ["Madeira", "Pedra", "Água", "Comida", "Metal"]
-TAMANHO_MAPA = 5  # matriz 5x5
+TAMANHO_MAPA = 5
 
-# Receitas de construção: cada item precisa de uma lista de recursos
-# no formato [nome_recurso, quantidade_necessaria]
 RECEITAS = {
-    "Machado":               [["Madeira", 3], ["Pedra", 2]],
-    "Fogueira":               [["Madeira", 5], ["Pedra", 3]],
-    "Abrigo":                 [["Madeira", 10], ["Pedra", 5]],
-    "Lança":                  [["Madeira", 2], ["Metal", 1]],
-    "Purificador de Água":    [["Metal", 4], ["Pedra", 2]],
+    "Machado": [["Madeira", 3], ["Pedra", 2]],
+    "Fogueira": [["Madeira", 5], ["Pedra", 3]],
+    "Abrigo": [["Madeira", 10], ["Pedra", 5]],
+    "Lança": [["Madeira", 2], ["Metal", 1]],
+    "Purificador de Água": [["Metal", 4], ["Pedra", 2]],
 }
 
-EVENTOS = [
-    "chuva_forte",
-    "animal_selvagem",
-    "bau_escondido",
-    "sobrevivente_perdido",
-    "tempestade_de_areia",
-]
-
-
-# ----------------------------------------------------------------------
-# FUNÇÕES DE APOIO / STRINGS
-# ----------------------------------------------------------------------
 
 def formatar_titulo(texto):
-    """Recebe um texto e devolve um cabeçalho formatado (manipulação de strings)."""
     linha = "-" * (len(texto) + 4)
     return f"\n{linha}\n| {texto.upper()} |\n{linha}"
 
 
 def normalizar_nome(nome):
-    """Remove espaços extras e deixa a primeira letra de cada palavra maiúscula."""
     return nome.strip().title()
 
 
-def pausar():
-    input("\nPressione ENTER para continuar...")
-
-
-# ----------------------------------------------------------------------
-# 1. CADASTRO DE SOBREVIVENTES
-# ----------------------------------------------------------------------
-# Estrutura: lista de dicionários (lista aninhada)
-# sobreviventes = [
-#     {"nome": "Ana", "vida": 100, "fome": 100, "sede": 100},
-#     ...
-# ]
-
 def cadastrar_sobrevivente(sobreviventes):
     print(formatar_titulo("Cadastro de Sobrevivente"))
-    nome_bruto = input("Nome do sobrevivente: ")
-    nome = normalizar_nome(nome_bruto)
+    nome = normalizar_nome(input("Nome do sobrevivente: "))
 
     if nome == "":
-        print("Nome inválido. Cadastro cancelado.")
+        print("Nome inválido.")
         return
 
     for s in sobreviventes:
@@ -85,53 +34,42 @@ def cadastrar_sobrevivente(sobreviventes):
             print(f"Já existe um sobrevivente chamado '{nome}'.")
             return
 
-    novo = {"nome": nome, "vida": 100, "fome": 100, "sede": 100}
-    sobreviventes.append(novo)
+    sobreviventes.append({"nome": nome, "vida": 100, "fome": 100, "sede": 100})
     print(f"Sobrevivente '{nome}' cadastrado com sucesso!")
 
 
 def listar_sobreviventes(sobreviventes):
     print(formatar_titulo("Sobreviventes do Acampamento"))
     if not sobreviventes:
-        print("Nenhum sobrevivente cadastrado ainda.")
+        print("Nenhum sobrevivente cadastrado.")
         return
-
     for i, s in enumerate(sobreviventes, start=1):
         status = "OK" if s["vida"] > 0 else "MORTO"
-        print(f"{i:02d}. {s['nome']:<15} | Vida: {s['vida']:>3} | "
-              f"Fome: {s['fome']:>3} | Sede: {s['sede']:>3} | {status}")
+        print(f"{i:02d}. {s['nome']:<15} | Vida: {s['vida']:>3} | Fome: {s['fome']:>3} | Sede: {s['sede']:>3} | {status}")
 
 
 def escolher_sobrevivente(sobreviventes):
-    """Pede ao usuário para escolher um sobrevivente vivo e devolve o dicionário dele."""
     vivos = [s for s in sobreviventes if s["vida"] > 0]
     if not vivos:
         print("Não há sobreviventes vivos!")
         return None
 
     listar_sobreviventes(sobreviventes)
-    nome_bruto = input("Digite o nome do sobrevivente: ")
-    nome = normalizar_nome(nome_bruto)
+    nome = normalizar_nome(input("Digite o nome do sobrevivente: "))
 
     for s in vivos:
         if s["nome"].lower() == nome.lower():
             return s
 
-    print("Sobrevivente não encontrado ou está morto.")
+    print("Sobrevivente não encontrado.")
     return None
 
 
-# ----------------------------------------------------------------------
-# 2. MAPA DE EXPLORAÇÃO (MATRIZ) E COLETA DE RECURSOS
-# ----------------------------------------------------------------------
-
 def gerar_mapa(tamanho):
-    """Gera uma matriz (lista de listas) representando a área de exploração."""
     mapa = []
     for _linha in range(tamanho):
         linha_atual = []
         for _coluna in range(tamanho):
-            # 25% de chance da célula estar vazia (já explorada)
             if random.random() < 0.25:
                 linha_atual.append("Vazio")
             else:
@@ -152,7 +90,7 @@ def coletar_recurso(mapa, inventario, sobrevivente):
     exibir_mapa(mapa)
 
     if sobrevivente["fome"] <= 0 or sobrevivente["sede"] <= 0:
-        print(f"{sobrevivente['nome']} está fraco demais (fome/sede) para explorar!")
+        print(f"{sobrevivente['nome']} está fraco demais para explorar!")
         return
 
     try:
@@ -169,24 +107,18 @@ def coletar_recurso(mapa, inventario, sobrevivente):
     recurso = mapa[linha][coluna]
 
     if recurso == "Vazio":
-        print("Esta célula já foi explorada e não possui recursos.")
+        print("Esta célula já foi explorada.")
         return
 
     quantidade = random.randint(1, 5)
     adicionar_ao_inventario(inventario, recurso, quantidade)
     mapa[linha][coluna] = "Vazio"
 
-    # explorar custa fome/sede do sobrevivente
     sobrevivente["fome"] = max(0, sobrevivente["fome"] - 5)
     sobrevivente["sede"] = max(0, sobrevivente["sede"] - 5)
 
     print(f"{sobrevivente['nome']} coletou {quantidade}x {recurso}!")
 
-
-# ----------------------------------------------------------------------
-# 3. CONTROLE DE INVENTÁRIO
-# ----------------------------------------------------------------------
-# Estrutura: lista aninhada -> inventario = [[nome, quantidade], ...]
 
 def adicionar_ao_inventario(inventario, nome_recurso, quantidade):
     for item in inventario:
@@ -207,7 +139,6 @@ def remover_do_inventario(inventario, nome_recurso, quantidade):
 
 
 def possui_recursos_suficientes(inventario, requisitos):
-    """requisitos é uma lista aninhada [[recurso, quantidade], ...]"""
     for recurso, quantidade in requisitos:
         encontrado = False
         for item in inventario:
@@ -224,14 +155,9 @@ def exibir_inventario(inventario):
     if not inventario:
         print("Inventário vazio.")
         return
-    for item in inventario:
-        nome, quantidade = item
+    for nome, quantidade in inventario:
         print(f" - {nome:<10}: {quantidade}")
 
-
-# ----------------------------------------------------------------------
-# 4. CONSTRUÇÃO DE ITENS
-# ----------------------------------------------------------------------
 
 def exibir_receitas():
     print(formatar_titulo("Receitas Disponíveis"))
@@ -242,11 +168,10 @@ def exibir_receitas():
 
 def construir_item(inventario, itens_construidos):
     exibir_receitas()
-    nome_bruto = input("O que deseja construir? ")
-    nome_item = normalizar_nome(nome_bruto)
+    nome_item = normalizar_nome(input("O que deseja construir? "))
 
     if nome_item not in RECEITAS:
-        print("Item não encontrado na lista de receitas.")
+        print("Item não encontrado.")
         return
 
     requisitos = RECEITAS[nome_item]
@@ -271,21 +196,17 @@ def exibir_itens_construidos(itens_construidos):
         print(f"{i:02d}. {item}")
 
 
-# ----------------------------------------------------------------------
-# 5. EVENTOS ALEATÓRIOS
-# ----------------------------------------------------------------------
-
 def evento_chuva_forte(sobreviventes, inventario):
     for s in sobreviventes:
         if s["vida"] > 0:
             s["sede"] = min(100, s["sede"] + 20)
-    return "Choveu forte! A sede de todos os sobreviventes foi recuperada em 20 pontos."
+    return "Choveu forte! A sede de todos foi recuperada em 20 pontos."
 
 
 def evento_animal_selvagem(sobreviventes, inventario):
     vivos = [s for s in sobreviventes if s["vida"] > 0]
     if not vivos:
-        return "Um animal selvagem rondou o acampamento, mas não havia ninguém por perto."
+        return "Um animal selvagem rondou o acampamento, mas não havia ninguém."
     alvo = random.choice(vivos)
     dano = random.randint(10, 25)
     alvo["vida"] = max(0, alvo["vida"] - dano)
@@ -296,7 +217,7 @@ def evento_bau_escondido(sobreviventes, inventario):
     recurso = random.choice(RECURSOS_POSSIVEIS)
     quantidade = random.randint(3, 10)
     adicionar_ao_inventario(inventario, recurso, quantidade)
-    return f"Um baú escondido foi encontrado! Ganhou {quantidade}x {recurso}."
+    return f"Baú escondido encontrado! Ganhou {quantidade}x {recurso}."
 
 
 def evento_sobrevivente_perdido(sobreviventes, inventario):
@@ -306,7 +227,7 @@ def evento_sobrevivente_perdido(sobreviventes, inventario):
         if s["nome"] == nome:
             return f"{nome} apareceu, mas já fazia parte do acampamento."
     sobreviventes.append({"nome": nome, "vida": 100, "fome": 80, "sede": 80})
-    return f"Um sobrevivente perdido chamado {nome} se juntou ao acampamento!"
+    return f"Sobrevivente perdido chamado {nome} se juntou ao acampamento!"
 
 
 def evento_tempestade_de_areia(sobreviventes, inventario):
@@ -314,29 +235,27 @@ def evento_tempestade_de_areia(sobreviventes, inventario):
         item = random.choice(inventario)
         perda = min(item[1], random.randint(1, 4))
         item[1] -= perda
-        return f"Tempestade de areia! Perdeu {perda}x {item[0]} do inventário."
-    return "Uma tempestade de areia passou, mas o inventário já estava vazio."
+        return f"Tempestade de areia! Perdeu {perda}x {item[0]}."
+    return "Tempestade de areia, mas o inventário já estava vazio."
 
 
 MAPA_DE_EVENTOS = {
-    "chuva_forte": evento_chuva_forte,
-    "animal_selvagem": evento_animal_selvagem,
-    "bau_escondido": evento_bau_escondido,
-    "sobrevivente_perdido": evento_sobrevivente_perdido,
-    "tempestade_de_areia": evento_tempestade_de_areia,
+    "chuva": evento_chuva_forte,
+    "animal": evento_animal_selvagem,
+    "bau": evento_bau_escondido,
+    "sobrevivente": evento_sobrevivente_perdido,
+    "tempestade": evento_tempestade_de_areia,
 }
 
 
 def disparar_evento_aleatorio(sobreviventes, inventario):
     print(formatar_titulo("Evento Aleatório"))
-    nome_evento = random.choice(EVENTOS)
-    funcao_evento = MAPA_DE_EVENTOS[nome_evento]
-    mensagem = funcao_evento(sobreviventes, inventario)
+    nome_evento = random.choice(list(MAPA_DE_EVENTOS.keys()))
+    mensagem = MAPA_DE_EVENTOS[nome_evento](sobreviventes, inventario)
     print(mensagem)
 
 
 def passar_o_tempo(sobreviventes):
-    """Reduz fome e sede a cada rodada; se chegarem a 0, a vida também cai."""
     for s in sobreviventes:
         if s["vida"] <= 0:
             continue
@@ -347,10 +266,6 @@ def passar_o_tempo(sobreviventes):
             print(f"{s['nome']} está sofrendo com fome/sede e perdeu vida!")
 
 
-# ----------------------------------------------------------------------
-# MENU PRINCIPAL
-# ----------------------------------------------------------------------
-
 def exibir_menu():
     print(formatar_titulo("Simulador de Sobrevivência"))
     print("1 - Cadastrar sobrevivente")
@@ -359,7 +274,7 @@ def exibir_menu():
     print("4 - Ver inventário")
     print("5 - Construir item")
     print("6 - Ver itens construídos")
-    print("7 - Avançar o tempo (novo dia + evento aleatório)")
+    print("7 - Avançar o tempo (evento aleatório)")
     print("0 - Sair")
 
 
@@ -369,44 +284,34 @@ def main():
     itens_construidos = []
     mapa = gerar_mapa(TAMANHO_MAPA)
 
-    print(formatar_titulo("Bem-vindo ao Simulador de Sobrevivência"))
-
     while True:
         exibir_menu()
         opcao = input("Escolha uma opção: ").strip()
 
         if opcao == "1":
             cadastrar_sobrevivente(sobreviventes)
-
         elif opcao == "2":
             listar_sobreviventes(sobreviventes)
-
         elif opcao == "3":
             sobrevivente = escolher_sobrevivente(sobreviventes)
             if sobrevivente:
                 coletar_recurso(mapa, inventario, sobrevivente)
-
         elif opcao == "4":
             exibir_inventario(inventario)
-
         elif opcao == "5":
             construir_item(inventario, itens_construidos)
-
         elif opcao == "6":
             exibir_itens_construidos(itens_construidos)
-
         elif opcao == "7":
             passar_o_tempo(sobreviventes)
             disparar_evento_aleatorio(sobreviventes, inventario)
-
         elif opcao == "0":
-            print("Encerrando o simulador. Até a próxima!")
+            print("Encerrando o simulador.")
             break
-
         else:
-            print("Opção inválida, tente novamente.")
+            print("Opção inválida.")
 
-        pausar()
+        input("\nPressione ENTER para continuar...")
 
 
 if __name__ == "__main__":
